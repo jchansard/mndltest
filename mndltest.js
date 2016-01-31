@@ -113,7 +113,6 @@
 					}
 					catch (e)
 					{
-						console.log(e.name);
 						var message = descriptions[index];
 						mndltest.addResult('fail', message, e);
 					}

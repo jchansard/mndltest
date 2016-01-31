@@ -1,0 +1,66 @@
+div#mndltest-results {
+	position: absolute;
+	right: 8px;
+	padding: 8px 16px 8px 16px;
+	background: #272822;
+	border-radius: 8px;
+	cursor: pointer;
+	z-index: 99;
+}
+div#mndltest-results h2, div#mndltest-results ul {
+	margin: 8px;
+	font-family: 'Segoe UI Light';
+}
+
+div#mndltest-results ul {
+	padding-left: 16px;
+	padding-bottom: 8px;
+}
+
+div#mndltest-results li {
+	font-family: 'calibri';
+	list-style-type: none;
+}
+
+div#mndltest-results li > ul {
+	margin: 0px 0px 0px  8px;
+	list-style-type: square;
+}
+
+div#mndltest-results li > ul li::before {
+	content: '▸ ';
+}
+
+div#mndltest-results div.test-group {
+	border-radius: 8px;
+	margin-bottom: 8px;
+}
+
+div#mndltest-results li.pass {
+	
+}
+
+div#mndltest-results li.pass::before {
+	content: '✓ PASS: ';
+}
+
+div#mndltest-results li.fail {
+
+}
+
+div#mndltest-results li.fail::before {
+	content: '✗ FAIL: ';
+	font-style: normal;
+}
+
+div#mndltest-results div.test-group.pass {
+	background-color: #A6E22E;
+	color: #272822;
+	border-left: 8px solid #209000;
+}
+
+div#mndltest-results div.test-group.fail {
+	background-color: #FF044A;
+	color: #FAFDFF;
+	border-left: 8px solid #CC0000;
+}

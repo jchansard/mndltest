@@ -21,23 +21,28 @@
  * https://github.com/jchansard/mndltest
  */
 (function() {
+	// css relies on it being div#mndltest-results
 	const TEST_CONTAINER_ID = 'mndltest-results'
 	const TEST_CONTAINER = 'div#' + TEST_CONTAINER_ID;
 
+	// assertions; throws an AssertionError on fail
 	this.assert = {
+		// actual must be true
 		isTrue: function(actual, description)
 		{
 			var result = (actual === true);
-			this._throwAssertError(actual)
+			if (result === false) { this._throwAssertionError(actual); }
 		},
 
+		// actual == expected (note not ===; haven't needed that yet)
 		equals: function(actual, expected, description)
 		{
 			var result = (actual == expected);
-			this._throwAssertError(actual, expected);
+			if (result === false) { this._throwAssertionError(actual, expected); }
 		},
 
-		_throwAssertError: function(actual, expected)
+		// throw an error that's caught by runTests
+		_throwAssertionError: function(actual, expected)
 		{
 			if (expected === undefined) { expected = true; }
 			var e = new Error();
@@ -48,7 +53,10 @@
 	};
 
 	this.mndltest = {
+		// current group of test cases
 		_$currentList: undefined,
+
+		// create elements to house results
 		start: function(testGroupName)
 		{
 			if ($(TEST_CONTAINER).length == 0)
@@ -56,13 +64,13 @@
 				$('body').append($(document.createElement('div')).attr('id',TEST_CONTAINER_ID));
 				$(TEST_CONTAINER).click(function() { $(this).hide(200); });
 			}
-		
-
+	
 			var $div = $(document.createElement('div')).addClass('test-group pass').appendTo(TEST_CONTAINER)
 				.append($(document.createElement('h2')).text(testGroupName));
 			this._$currentList = $(document.createElement('ul')).appendTo($div);;
 		},
 
+		// add a result <li>
 		addResult: function(result, description, error)
 		{
 			var $testResult = $(document.createElement('li'));
@@ -77,16 +85,19 @@
 			this._$currentList.append($testResult);
 		},
 
+		// cleanup
 		end: function()
 		{
 			this._$currentList = undefined;
 		},
 
+		// display results
 		displayResults: function()
 		{
 			$(TEST_CONTAINER).show(200);
 		},
 
+		// run tests
 		runTests: function(testCases)
 		{
 			for (thisCase in testCases)

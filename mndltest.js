@@ -97,6 +97,24 @@
 			$(TEST_CONTAINER).show(200);
 		},
 
+		// try fn, catching errors. if error, display fail message. 
+		// otherwise, display pass message, unless suppressPass=true.
+		tryToDo: function(fn, message, suppressPass)
+		{
+			suppressPass = suppressPass || false;
+			if (typeof fn === 'function')
+			{
+				try { 
+					fn();
+					if (!suppressPass) { this.addResult('pass', message); }
+				}
+				catch (e) {
+					this.addResult('fail', message, e);
+					console.error(e)
+				}
+			}
+		},
+
 		// run tests
 		runTests: function(testCases)
 		{
@@ -106,30 +124,25 @@
 				
 				var testCase = testCases[thisCase];
 				var fns = Object.keys(testCase);
-				var setup = testCase[fns[0]];
+				var setup, teardown;
 				var tests = [];
 				var descriptions = [];
 				var i;
-				for (var i = 1; i < fns.length - 1; i++)
+				for (var i = 0; i < fns.length; i++)
 				{
-					descriptions.push(fns[i]);
-					tests.push(testCase[fns[i]]);
+					if (fns[i] === 'setup') { setup = testCase[fns[i]]; }
+					else if (fns[i] === 'teardown') { teardown = testCase[fns[i]]; }
+					else {
+						descriptions.push(fns[i]);
+						tests.push(testCase[fns[i]]);
+					}
 				}
-				var teardown = testCase[fns[i]];
-				if (setup) { setup(); }
+				this.tryToDo(setup, "Error during setup()", true);
 				tests.forEach(function(test, index) {
-					try {
-						test();
-						mndltest.addResult('pass', descriptions[index]);
-					}
-					catch (e)
-					{
-						var message = descriptions[index];
-						mndltest.addResult('fail', message, e);
-					}
-				});
-
-				if (teardown) { teardown(); }
+					var message = descriptions[index];
+					this.tryToDo(test, message, false)
+				}.bind(this));
+				this.tryToDo(teardown, "Error during teardown()", true);
 
 				mndltest.end();
 			}

@@ -28,17 +28,43 @@
 	// assertions; throws an AssertionError on fail
 	this.assert = {
 		// actual must be true
-		isTrue: function(actual, description)
+		isTrue: function(actual)
 		{
 			var result = (actual === true);
 			if (result === false) { this._throwAssertionError(actual); }
 		},
 
 		// actual == expected (note not ===; haven't needed that yet)
-		equals: function(actual, expected, description)
+		equals: function(actual, expected)
 		{
-			var result = (actual == expected);
+			result = this._equals(actual, expected);
 			if (result === false) { this._throwAssertionError(actual, expected); }
+		},
+
+		_equals: function(actual, expected)
+		{
+			var result;
+			if (actual instanceof Array && expected instanceof Array)
+			{
+				if (actual.length !== expected.length)
+				{
+					return false;
+				}
+				else
+				{
+					actual.forEach(function(v,i,a) {
+						if (!this._equals(v, expected[i]))
+						{
+							return false;
+						}
+					}, this);
+				}
+				return true;
+			}
+			else
+			{
+				return actual == expected;
+			}
 		},
 
 		// throw an error that's caught by runTests
@@ -57,7 +83,7 @@
 		_$currentList: undefined,
 
 		// create elements to house results
-		start: function(testGroupName)
+		_start: function(testGroupName)
 		{
 			if ($(TEST_CONTAINER).length == 0)
 			{
@@ -70,8 +96,32 @@
 			this._$currentList = $(document.createElement('ul')).appendTo($div);;
 		},
 
+		// cleanup
+		_end: function()
+		{
+			this._$currentList = undefined;
+		},
+
+		// try fn, catching errors. if error, display fail message. 
+		// otherwise, display pass message, unless suppressPass=true.
+		_tryToDo: function(fn, message, suppressPass)
+		{
+			suppressPass = suppressPass || false;
+			if (typeof fn === 'function')
+			{
+				try { 
+					fn();
+					if (!suppressPass) { this._addResult('pass', message); }
+				}
+				catch (e) {
+					this._addResult('fail', message, e);
+					console.error(e)
+				}
+			}
+		},
+
 		// add a result <li>
-		addResult: function(result, description, error)
+		_addResult: function(result, description, error)
 		{
 			var $testResult = $(document.createElement('li'));
 			$testResult = $testResult.addClass(result).html(description);
@@ -85,34 +135,16 @@
 			this._$currentList.append($testResult);
 		},
 
-		// cleanup
-		end: function()
-		{
-			this._$currentList = undefined;
-		},
-
-		// display results
-		displayResults: function()
+		// display results. 
+		_displayResults: function()
 		{
 			$(TEST_CONTAINER).show(200);
 		},
 
-		// try fn, catching errors. if error, display fail message. 
-		// otherwise, display pass message, unless suppressPass=true.
-		tryToDo: function(fn, message, suppressPass)
+		dispatchEvent: function(type, properties, target)
 		{
-			suppressPass = suppressPass || false;
-			if (typeof fn === 'function')
-			{
-				try { 
-					fn();
-					if (!suppressPass) { this.addResult('pass', message); }
-				}
-				catch (e) {
-					this.addResult('fail', message, e);
-					console.error(e)
-				}
-			}
+			var e = $.Event(type, properties);
+			$(target).trigger(e);
 		},
 
 		// run tests
@@ -120,7 +152,7 @@
 		{
 			for (thisCase in testCases)
 			{
-				mndltest.start(thisCase);
+				mndltest._start(thisCase);
 				
 				var testCase = testCases[thisCase];
 				var fns = Object.keys(testCase);
@@ -137,14 +169,14 @@
 						tests.push(testCase[fns[i]]);
 					}
 				}
-				this.tryToDo(setup, "Error during setup()", true);
+				this._tryToDo(setup, "Error during setup()", true);
 				tests.forEach(function(test, index) {
 					var message = descriptions[index];
-					this.tryToDo(test, message, false)
+					this._tryToDo(test, message, false)
 				}.bind(this));
-				this.tryToDo(teardown, "Error during teardown()", true);
+				this._tryToDo(teardown, "Error during teardown()", true);
 
-				mndltest.end();
+				mndltest._end();
 			}
 		}
 	}

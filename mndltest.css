@@ -10,6 +10,7 @@ div#mndltest-results {
 div#mndltest-results h2, div#mndltest-results ul {
 	margin: 8px;
 	font-family: 'Segoe UI Light';
+	font-size: 14px;
 }
 
 div#mndltest-results ul {
@@ -19,6 +20,7 @@ div#mndltest-results ul {
 
 div#mndltest-results li {
 	font-family: 'calibri';
+	font-size: 11px;
 	list-style-type: none;
 }
 

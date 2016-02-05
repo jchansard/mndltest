@@ -66,3 +66,9 @@ div#mndltest-results div.test-group.fail {
 	color: #FAFDFF;
 	border-left: 8px solid #CC0000;
 }
+
+div#mndltest-results pre {
+	padding: .5em;
+	background-color: rgba(255, 255, 255, .1);
+	border: 1px solid rgba(39, 30, 34, .1);
+}

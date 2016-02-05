@@ -34,7 +34,7 @@
 			if (result === false) { this._throwAssertionError(actual); }
 		},
 
-		// actual == expected (note not ===; haven't needed that yet)
+		// returns true if actual equals expected; else throws assertion error
 		equals: function(actual, expected)
 		{
 			result = this._equals(actual, expected);
@@ -43,27 +43,80 @@
 
 		_equals: function(actual, expected)
 		{
-			var result;
-			if (actual instanceof Array && expected instanceof Array)
+			// if actual is null and expected is undefined, they're equal enough
+			if ((actual === undefined && expected === null) || (actual === null && expected === undefined))
 			{
+				return true;
+			}
+
+			// with the above exception, actual and expected must have same type
+			if (typeof actual !== typeof expected)
+			{
+				return false;
+			}
+
+			// if they're arrays, compare index by index 
+			else if (actual instanceof Array && expected instanceof Array)
+			{
+				// if their lengths are different, they're not equal
 				if (actual.length !== expected.length)
 				{
 					return false;
 				}
-				else
+
+				// compare index by index, recursively
+				for (var i = 0; i < actual.length; i++)
 				{
-					actual.forEach(function(v,i,a) {
-						if (!this._equals(v, expected[i]))
-						{
-							return false;
-						}
-					}, this);
+					if (!this._equals(actual[i], expected[i]))
+					{
+						return false;
+					}
 				}
 				return true;
 			}
+
+			// if they're objects, compare property by property
+			else if (typeof actual === 'object')
+			{
+				var prop;
+				for (prop in actual) {
+
+					// if actual has a property that expected doesn't, return false
+					if (typeof expected[prop] === 'undefined') 
+					{ 
+						return false; 
+					}
+				    
+				    // else recursively check equality of the two properties and return false if they're not equal
+				    if (!this._equals(actual[prop], expected[prop])) 
+				    {
+				    	return false;
+				    }
+				}
+
+				// if expected has a property that actual doesn't, return false
+				for (prop in expected) {
+				      
+				    if (typeof actual[prop] ==='undefined') 
+				    { 
+				    	return false;
+				    }
+				}
+
+				// if we made it here, they're equal
+				return true;
+			}
+
+			// if they're functions, compare toStrings (this feels janky)
+			else if (typeof actual === 'function')
+			{
+				return (actual.toString() == expected.toString());
+			}
+
+			// otherwise == comparison should suffice
 			else
 			{
-				return actual == expected;
+				return (actual == expected);
 			}
 		},
 
@@ -111,19 +164,19 @@
 			{
 				try { 
 					fn();
-					if (!suppressPass) { this._addResult('pass', message); }
+					if (!suppressPass) { this._addResult('pass', message,  fn.toString()); }
 				}
 				catch (e) {
-					this._addResult('fail', message, e);
+					this._addResult('fail', message, fn.toString(), e);
 					console.error(e)
 				}
 			}
 		},
 
 		// add a result <li>
-		_addResult: function(result, description, error)
+		_addResult: function(result, description, functionToString, error)
 		{
-			var $testResult = $(document.createElement('li'));
+			var $testResult = $(document.createElement('li')).click(functionToString, this._displayTestFunction);
 			$testResult = $testResult.addClass(result).html(description);
 			if (error != undefined)
 			{
@@ -139,6 +192,32 @@
 		_displayResults: function()
 		{
 			$(TEST_CONTAINER).show(200);
+		},
+
+		// displays a test case's test function
+		_displayTestFunction: function(e) 
+		{
+			e.stopPropagation();
+
+			if ($(this).data('preCreated'))	{ 
+				$(this).children('pre').toggle(300);
+			}
+
+			if ($(this).data('preCreated') === undefined)
+			{
+				var funcDisplayHandler = function(e) {
+					e.stopPropagation();
+					$(this).children('pre').hide(300);
+				}.bind(this);
+
+				$(this).data('preCreated', true);
+				$(document.createElement('pre'))
+				.html(e.data)
+				.click(funcDisplayHandler)
+				.hide()
+				.appendTo($(this))
+				.show(300);
+			}
 		},
 
 		dispatchEvent: function(type, properties, target)

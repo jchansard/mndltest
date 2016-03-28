@@ -1,0 +1,19 @@
+{
+  "name": "mndltest",
+  "version": "1.0.0",
+  "description": "simple graphical unit test framework",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jchansard/mndltest.git"
+  },
+  "author": "josh chansard",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jchansard/mndltest/issues"
+  },
+  "homepage": "https://github.com/jchansard/mndltest#readme"
+}

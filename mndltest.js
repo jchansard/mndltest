@@ -20,122 +20,128 @@
  * Josh Chansard 
  * https://github.com/jchansard/mndltest
  */
-module.exports = function($, id, container) {
+
+// assertions; throws an AssertionError on fail
+module.exports.assert = {
+	// actual must be true
+	isTrue: function(actual)
+	{
+		var result = (actual === true);
+		if (result === false) { this._throwAssertionError(actual); }
+	},
+
+	// returns true if actual equals expected; else throws assertion error
+	equals: function(actual, expected)
+	{
+		result = this._equals(actual, expected);
+		if (result === false) { this._throwAssertionError(actual, expected); }
+	},
+
+	_equals: function(actual, expected)
+	{
+		// if actual is null and expected is undefined, they're equal enough
+		if ((actual === undefined && expected === null) || (actual === null && expected === undefined))
+		{
+			return true;
+		}
+
+		// with the above exception, actual and expected must have same type
+		if (typeof actual !== typeof expected)
+		{
+			return false;
+		}
+
+		// if they're arrays, compare index by index 
+		else if (actual instanceof Array && expected instanceof Array)
+		{
+			// if their lengths are different, they're not equal
+			if (actual.length !== expected.length)
+			{
+				return false;
+			}
+
+			// compare index by index, recursively
+			for (var i = 0; i < actual.length; i++)
+			{
+				if (!this._equals(actual[i], expected[i]))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// if they're objects, compare property by property
+		else if (typeof actual === 'object')
+		{
+			var prop;
+			for (prop in actual) {
+
+				// if actual has a property that expected doesn't, return false
+				if (typeof expected[prop] === 'undefined') 
+				{ 
+					return false; 
+				}
+			    
+			    // else recursively check equality of the two properties and return false if they're not equal
+			    if (!this._equals(actual[prop], expected[prop])) 
+			    {
+			    	return false;
+			    }
+			}
+
+			// if expected has a property that actual doesn't, return false
+			for (prop in expected) {
+			      
+			    if (typeof actual[prop] ==='undefined') 
+			    { 
+			    	return false;
+			    }
+			}
+
+			// if we made it here, they're equal
+			return true;
+		}
+
+		// if they're functions, compare toStrings (this feels janky)
+		else if (typeof actual === 'function')
+		{
+			return (actual.toString() == expected.toString());
+		}
+
+		// otherwise == comparison should suffice
+		else
+		{
+			return (actual == expected);
+		}
+	},
+
+	dispatchEvent: function(type, properties, target)
+	{
+		var e = $.Event(type, properties);
+		$(target).trigger(e);
+	},
+
+	// throw an error that's caught by runTests
+	_throwAssertionError: function(actual, expected)
+	{
+		if (expected === undefined) { expected = true; }
+		var e = new Error();
+		e.name = "AssertionError";
+		e.message = "Expected " + expected + ", but " + actual + " was returned." 
+		throw e;
+	}
+};
+
+module.exports.test = function($, id, container) {
 
 	// css relies on it being div#mndltest-results
 	const TEST_CONTAINER_ID = id || 'mndltest-results'
 	const TEST_CONTAINER = container || 'div#' + TEST_CONTAINER_ID;
 	var mndltest = {};
-
-	// assertions; throws an AssertionError on fail
-	mndltest.assert = {
-		// actual must be true
-		isTrue: function(actual)
-		{
-			var result = (actual === true);
-			if (result === false) { this._throwAssertionError(actual); }
-		},
-
-		// returns true if actual equals expected; else throws assertion error
-		equals: function(actual, expected)
-		{
-			result = this._equals(actual, expected);
-			if (result === false) { this._throwAssertionError(actual, expected); }
-		},
-
-		_equals: function(actual, expected)
-		{
-			// if actual is null and expected is undefined, they're equal enough
-			if ((actual === undefined && expected === null) || (actual === null && expected === undefined))
-			{
-				return true;
-			}
-
-			// with the above exception, actual and expected must have same type
-			if (typeof actual !== typeof expected)
-			{
-				return false;
-			}
-
-			// if they're arrays, compare index by index 
-			else if (actual instanceof Array && expected instanceof Array)
-			{
-				// if their lengths are different, they're not equal
-				if (actual.length !== expected.length)
-				{
-					return false;
-				}
-
-				// compare index by index, recursively
-				for (var i = 0; i < actual.length; i++)
-				{
-					if (!this._equals(actual[i], expected[i]))
-					{
-						return false;
-					}
-				}
-				return true;
-			}
-
-			// if they're objects, compare property by property
-			else if (typeof actual === 'object')
-			{
-				var prop;
-				for (prop in actual) {
-
-					// if actual has a property that expected doesn't, return false
-					if (typeof expected[prop] === 'undefined') 
-					{ 
-						return false; 
-					}
-				    
-				    // else recursively check equality of the two properties and return false if they're not equal
-				    if (!this._equals(actual[prop], expected[prop])) 
-				    {
-				    	return false;
-				    }
-				}
-
-				// if expected has a property that actual doesn't, return false
-				for (prop in expected) {
-				      
-				    if (typeof actual[prop] ==='undefined') 
-				    { 
-				    	return false;
-				    }
-				}
-
-				// if we made it here, they're equal
-				return true;
-			}
-
-			// if they're functions, compare toStrings (this feels janky)
-			else if (typeof actual === 'function')
-			{
-				return (actual.toString() == expected.toString());
-			}
-
-			// otherwise == comparison should suffice
-			else
-			{
-				return (actual == expected);
-			}
-		},
-
-		// throw an error that's caught by runTests
-		_throwAssertionError: function(actual, expected)
-		{
-			if (expected === undefined) { expected = true; }
-			var e = new Error();
-			e.name = "AssertionError";
-			e.message = "Expected " + expected + ", but " + actual + " was returned." 
-			throw e;
-		}
-	};
-
 	if ($)
 	{
-		mndltest.tests = {
+		return {
 			// current group of test cases
 			_$currentList: undefined,
 
@@ -145,7 +151,6 @@ module.exports = function($, id, container) {
 				if ($(TEST_CONTAINER).length == 0)
 				{
 					$('body').append($(document.createElement('div')).attr('id',TEST_CONTAINER_ID));
-					$(TEST_CONTAINER).click(function() { $(this).hide(200); });
 				}
 		
 				var $div = $(document.createElement('div')).addClass('test-group pass').appendTo(TEST_CONTAINER)
@@ -224,12 +229,6 @@ module.exports = function($, id, container) {
 				}
 			},
 
-			dispatchEvent: function(type, properties, target)
-			{
-				var e = $.Event(type, properties);
-				$(target).trigger(e);
-			},
-
 			// run tests
 			run: function(testCases)
 			{
@@ -264,6 +263,4 @@ module.exports = function($, id, container) {
 			}
 		}
 	}
-
-	return mndltest;
 }
